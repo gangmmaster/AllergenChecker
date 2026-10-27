@@ -2,7 +2,8 @@ package com.example.allergenchecker.data
 
 data class Product(
     val id: Int,
+    val barcode: String,
     val name: String,
-    var brand: String,
+    val brand: String,
     val ingredients: List<Ingredient>
 )

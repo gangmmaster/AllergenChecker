@@ -5,14 +5,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.allergenchecker.data.userAllergens
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onBack: () -> Unit) {
+fun ProfileScreen(
+    onBack: () -> Unit,
+    viewModel: ProfileViewModel = koinViewModel()
+) {
+    val state by viewModel.uiState.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -25,22 +32,17 @@ fun ProfileScreen(onBack: () -> Unit) {
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            Text("Кирилл", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Column(Modifier.padding(padding).padding(16.dp)) {
+            Text(
+                state.name.ifBlank { "Загрузка..." },
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
             Spacer(Modifier.height(16.dp))
             Text("Критические аллергены", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-
-            userAllergens.forEach { allergen ->
-                Text(
-                    text = "• $allergen",
-                    modifier = Modifier.padding(vertical = 4.dp),
-                    style = MaterialTheme.typography.bodyLarge
-                )
+            state.allergens.forEach {
+                Text("• $it", Modifier.padding(vertical = 4.dp))
             }
         }
     }

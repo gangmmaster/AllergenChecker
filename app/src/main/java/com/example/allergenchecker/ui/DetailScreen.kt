@@ -9,6 +9,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,17 +20,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.allergenchecker.data.Ingredient
 import com.example.allergenchecker.data.Risk
-import com.example.allergenchecker.data.testProducts
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(id: Int, onBack: () -> Unit) {
-    val product = testProducts.find { it.id == id }
+fun DetailScreen(
+    id: Int,
+    onBack: () -> Unit,
+    viewModel: DetailViewModel = koinViewModel()
+) {
+    LaunchedEffect(id) {
+        viewModel.loadProduct(id)
+    }
+
+    val state by viewModel.uiState.collectAsState()
+    val product = state.product
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(product?.name ?: "") },
+                title = { Text(product?.name ?: "Загрузка...") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
@@ -37,8 +49,11 @@ fun DetailScreen(id: Int, onBack: () -> Unit) {
         }
     ) { padding ->
         if (product == null) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Не найдено")
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
             return@Scaffold
         }
@@ -64,6 +79,7 @@ fun DetailScreen(id: Int, onBack: () -> Unit) {
             item {
                 Text(product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text(product.brand, style = MaterialTheme.typography.bodyMedium)
+                Text("Штрих-код: ${product.barcode}", style = MaterialTheme.typography.bodySmall)
             }
 
             item {

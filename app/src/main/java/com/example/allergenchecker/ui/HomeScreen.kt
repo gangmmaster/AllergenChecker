@@ -6,25 +6,33 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.allergenchecker.data.Product
+import com.example.allergenchecker.data.Risk
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onProductClick: (Int) -> Unit,
     onProfileClick: () -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    onScanClick: () -> Unit,
+    onScanTextClick: () -> Unit,
+    onDietClick: () -> Unit,
+    viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -38,19 +46,35 @@ fun HomeScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = onDietClick,
+                    icon = { Icon(Icons.Default.Restaurant, contentDescription = null) },
+                    text = { Text("Анализ рациона") }
+                )
+                ExtendedFloatingActionButton(
+                    onClick = onScanTextClick,
+                    icon = { Icon(Icons.Default.TextFields, contentDescription = null) },
+                    text = { Text("Сканировать текст") }
+                )
+                ExtendedFloatingActionButton(
+                    onClick = onScanClick,
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text("Сканировать штрихкод") }
+                )
+            }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
+        Column(Modifier.padding(padding).fillMaxSize()) {
             OutlinedTextField(
                 value = state.query,
                 onValueChange = viewModel::onQueryChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 placeholder = { Text("Поиск по названию или бренду") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 singleLine = true
@@ -76,10 +100,17 @@ fun HomeScreen(
 
 @Composable
 fun ProductCard(product: Product, onClick: () -> Unit) {
+    val hasDanger = product.ingredients.any { it.risk == Risk.DANGER }
+    val hasWarning = product.ingredients.any { it.risk == Risk.WARNING }
+    val bg = when {
+        hasDanger -> Color(0xFFFFCDD2)
+        hasWarning -> Color(0xFFFFF3E0)
+        else -> Color(0xFFE8F5E9)
+    }
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = bg),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
